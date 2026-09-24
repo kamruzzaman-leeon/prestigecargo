@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import multer from 'multer';
 import { connectDB } from './server/db.js';
 import { SiteData } from './server/models/SiteData.js';
 import { Inquiry } from './server/models/Inquiry.js';
@@ -17,6 +18,51 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Upload and Static directories
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+const VIDEOS_UPLOAD_DIR = path.join(UPLOADS_DIR, 'videos');
+if (!fs.existsSync(VIDEOS_UPLOAD_DIR)) {
+  fs.mkdirSync(VIDEOS_UPLOAD_DIR, { recursive: true });
+}
+
+// Serve static assets directly from public
+app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/videos', express.static(path.join(__dirname, 'public', 'videos')));
+app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+
+// Multer Storage Configuration for Local PC Video Uploads
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, VIDEOS_UPLOAD_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const baseName = path.basename(file.originalname, ext)
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 40);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e6);
+    cb(null, `hero_${baseName}_${uniqueSuffix}${ext || '.mp4'}`);
+  }
+});
+
+const videoUpload = multer({
+  storage: videoStorage,
+  limits: {
+    fileSize: 200 * 1024 * 1024 // 200MB limit for HD/4K videos
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedExts = ['.mp4', '.webm', '.ogg', '.mov', '.m4v', '.mkv'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isVideoMime = file.mimetype.startsWith('video/') || file.mimetype === 'application/octet-stream';
+
+    if (isVideoMime || allowedExts.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid video format. Supported formats: MP4, WebM, MOV, OGG, MKV'));
+    }
+  }
+});
 
 // Initialize MongoDB Connection
 connectDB();
@@ -358,7 +404,80 @@ app.post('/api/send-email', async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 5. Database Health Check Endpoint
+// 5. Video Upload & Management Endpoint (Local PC Video Upload)
+// -------------------------------------------------------------
+app.post('/api/upload/video', (req, res) => {
+  videoUpload.single('video')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          error: 'Video file exceeds the maximum allowed size of 200MB. Please compress or select a smaller video.'
+        });
+      }
+      return res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No video file provided. Please select a video from your local PC.'
+      });
+    }
+
+    const publicUrl = `/uploads/videos/${req.file.filename}`;
+    console.log(`🎥 [Video Upload] Uploaded: ${req.file.originalname} -> ${publicUrl} (${(req.file.size / (1024 * 1024)).toFixed(2)} MB)`);
+
+    res.json({
+      success: true,
+      url: publicUrl,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      message: 'Video successfully uploaded and ready for hero carousel.'
+    });
+  });
+});
+
+app.get('/api/videos', (req, res) => {
+  try {
+    const list = [];
+    const publicVideosDir = path.join(__dirname, 'public', 'videos');
+    if (fs.existsSync(publicVideosDir)) {
+      fs.readdirSync(publicVideosDir).forEach(file => {
+        if (/\.(mp4|webm|mov|ogg|m4v)$/i.test(file)) {
+          list.push({
+            name: file,
+            path: `/videos/${file}`,
+            category: 'default'
+          });
+        }
+      });
+    }
+
+    if (fs.existsSync(VIDEOS_UPLOAD_DIR)) {
+      fs.readdirSync(VIDEOS_UPLOAD_DIR).forEach(file => {
+        if (/\.(mp4|webm|mov|ogg|m4v)$/i.test(file)) {
+          list.push({
+            name: file,
+            path: `/uploads/videos/${file}`,
+            category: 'uploaded'
+          });
+        }
+      });
+    }
+
+    res.json({ success: true, videos: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// -------------------------------------------------------------
+// 6. Database Health Check Endpoint
 // -------------------------------------------------------------
 app.get('/api/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';

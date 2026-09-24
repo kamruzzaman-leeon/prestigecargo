@@ -25,3 +25,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Uploaded media from admin
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/videos/.gitkeep
+
+# Exclude heavy raw video files exceeding git limits
+public/videos/byroad.mp4
+public/videos/road.mp4
+public/videos/air.mp4
+public/videos/ocean.mp4
+public/videos/14806792_3840_2160_30fps.mp4
+public/videos/15386432_3840_2160_25fps.mp4
+public/videos/istockphoto-1286061889-640_adpp_is.mp4
+public/videos/istockphoto-1473471897-640_adpp_is.mp4

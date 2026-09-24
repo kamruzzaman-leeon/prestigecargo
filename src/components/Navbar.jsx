@@ -59,13 +59,10 @@ export default function Navbar({ onOpenQuote }) {
           </nav>
 
           <div className="nav-actions">
-            <Link to="/tracking" className="nav-btn-track">
-              Track Shipment
-            </Link>
             <button className="nav-btn-quote" onClick={onOpenQuote}>
               Get a Quote
             </button>
-            <button className="mobile-toggle" onClick={() => setMobileNavOpen(!mobileNavOpen)}>
+            <button className="mobile-toggle" onClick={() => setMobileNavOpen(!mobileNavOpen)} aria-label="Toggle Navigation">
               {mobileNavOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>

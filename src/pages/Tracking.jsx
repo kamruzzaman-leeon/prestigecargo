@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useDataContext } from '../context/DataContext';
 import { Search, CheckCircle2, Clock, Box, Plane } from 'lucide-react';
 
 export default function Tracking({ onOpenQuote }) {
   const { trackingData } = useDataContext();
+  const [searchParams] = useSearchParams();
   const [trackingNumber, setTrackingNumber] = useState('');
   const [trackingResult, setTrackingResult] = useState(null);
   const [isTrackingLoading, setIsTrackingLoading] = useState(false);
 
-  const handleTrackSubmit = (e) => {
-    e.preventDefault();
-    if (!trackingNumber.trim()) return;
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam) {
+      setTrackingNumber(codeParam);
+      runTracking(codeParam);
+    }
+  }, [searchParams]);
 
+  const runTracking = (code) => {
     setIsTrackingLoading(true);
-    const upperCode = trackingNumber.trim().toUpperCase();
+    const upperCode = code.trim().toUpperCase();
 
     setTimeout(() => {
       setIsTrackingLoading(false);
@@ -37,6 +44,12 @@ export default function Tracking({ onOpenQuote }) {
         });
       }
     }, 600);
+  };
+
+  const handleTrackSubmit = (e) => {
+    e.preventDefault();
+    if (!trackingNumber.trim()) return;
+    runTracking(trackingNumber);
   };
 
   return (

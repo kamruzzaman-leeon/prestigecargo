@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useDataContext } from '../context/DataContext';
+import { defaultHeroSlidesData } from '../data/defaultSiteData';
 import {
   LayoutDashboard, Building2, Ship, Globe2, Save, RefreshCw,
   Plus, Trash2, ShieldCheck, Mail, Lock, LogOut, Image as ImageIcon,
   Layers, Eye, EyeOff, Search, CheckCircle2, MapPin, AlertCircle,
   ExternalLink, FileText, Phone, ArrowRight, Clock, TrendingUp,
   Download, Filter, Check, X, Activity, Truck, Plane, Copy,
-  Sparkles, Menu, Send, ChevronRight
+  Sparkles, Menu, Send, ChevronRight, Upload, UploadCloud, Film,
+  Video, Play, Pause, Volume2, VolumeX, RotateCcw, AlertTriangle,
+  FileVideo, Maximize2
 } from 'lucide-react';
 import '../admin.css';
 
@@ -40,7 +43,18 @@ export default function Admin() {
   const [globalSearch, setGlobalSearch] = useState('');
 
   // Local Editable States (Cloned from context for atomic saving)
-  const [localHeroSlides, setLocalHeroSlides] = useState(heroSlides || []);
+  const [localHeroSlides, setLocalHeroSlides] = useState(heroSlides || defaultHeroSlidesData);
+  const [selectedHeroIndex, setSelectedHeroIndex] = useState(0);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(null);
+  const [previewPlaying, setPreviewPlaying] = useState(true);
+  const [previewMuted, setPreviewMuted] = useState(true);
+  const [availableVideos, setAvailableVideos] = useState([]);
+  const [isDragOverVideo, setIsDragOverVideo] = useState(false);
+  const videoFileInputRef = useRef(null);
+  const liveVideoPreviewRef = useRef(null);
   const [localIndustries, setLocalIndustries] = useState(industriesList || []);
   const [localCompany, setLocalCompany] = useState(companyInfo || {});
   const [localServices, setLocalServices] = useState(servicesList || []);
@@ -191,12 +205,193 @@ export default function Admin() {
     showToast('Logged out of Admin Control Tower.', 'info');
   };
 
+  // Preset logistics background videos
+  const defaultVideoPresets = [
+    { label: 'Ocean Freight Liner', path: '/videos/ocean_freight.mp4', poster: '/images/ocean_freight.png', icon: 'Ship' },
+    { label: 'Boeing 777 Air Cargo', path: '/videos/air_freight.mp4', poster: '/images/air_freight.png', icon: 'Plane' },
+    { label: 'Highway Trucking Fleet', path: '/videos/road_freight.mp4', poster: '/images/truck_transport.png', icon: 'Truck' },
+    { label: 'Port Terminal & Cranes', path: '/videos/port_terminal.mp4', poster: '/images/warehouse_cfs.png', icon: 'Warehouse' }
+  ];
+
+  // Fallback safe slides
+  const heroSlidesSafe = useMemo(() => {
+    if (localHeroSlides && Array.isArray(localHeroSlides) && localHeroSlides.length > 0) {
+      return localHeroSlides;
+    }
+    return defaultHeroSlidesData;
+  }, [localHeroSlides]);
+
+  const selectedHeroIndexSafe = selectedHeroIndex >= heroSlidesSafe.length ? 0 : selectedHeroIndex;
+  const activeHeroSlide = heroSlidesSafe[selectedHeroIndexSafe] || defaultHeroSlidesData[0];
+
+  const updateActiveHeroSlide = (fields) => {
+    setLocalHeroSlides((prev) => {
+      const base = (prev && prev.length > 0) ? [...prev] : [...defaultHeroSlidesData];
+      const targetIdx = selectedHeroIndex >= base.length ? 0 : selectedHeroIndex;
+      base[targetIdx] = {
+        ...base[targetIdx],
+        ...fields
+      };
+      return base;
+    });
+  };
+
+  const fetchAvailableVideos = useCallback(async () => {
+    try {
+      const res = await fetch('/api/videos');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.videos) {
+          setAvailableVideos(json.videos);
+        }
+      }
+    } catch (e) {
+      // Backend may be offline in static dev mode
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'hero') {
+      fetchAvailableVideos();
+    }
+  }, [activeTab, fetchAvailableVideos]);
+
+  const handleVideoFileSelected = (file) => {
+    if (!file) return;
+
+    // Validate file type
+    const validExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.m4v', '.mkv'];
+    const isVideo = file.type.startsWith('video/') || validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    if (!isVideo) {
+      setUploadError('Please select a valid video file (MP4, WebM, MOV, OGG, MKV).');
+      showToast('Invalid video format. Supported: MP4, WebM, MOV, OGG.', 'error');
+      return;
+    }
+
+    // Validate size (200MB limit)
+    const MAX_SIZE = 200 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setUploadError(`File is too large (${sizeMb} MB). Maximum allowed size is 200MB.`);
+      showToast('Video exceeds 200MB limit.', 'error');
+      return;
+    }
+
+    setUploadError(null);
+    setUploadSuccess(null);
+    setIsUploadingVideo(true);
+    setUploadProgress(15);
+
+    // Instant local preview via Blob URL
+    const tempUrl = URL.createObjectURL(file);
+    updateActiveHeroSlide({
+      video: tempUrl,
+      videoFileName: file.name,
+      videoFileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+    });
+
+    const formData = new FormData();
+    formData.append('video', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload/video');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setUploadProgress(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      setIsUploadingVideo(false);
+      if (xhr.status === 200) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.success && res.url) {
+            updateActiveHeroSlide({
+              video: res.url,
+              videoFileName: res.originalName || file.name,
+              videoFileSize: (res.size / (1024 * 1024)).toFixed(1) + ' MB'
+            });
+            setUploadSuccess(`"${file.name}" uploaded successfully! Video assigned to Slide #${selectedHeroIndexSafe + 1}.`);
+            showToast(`Video uploaded from local PC for Slide #${selectedHeroIndexSafe + 1}!`);
+            fetchAvailableVideos();
+          } else {
+            setUploadError(res.error || 'Video upload failed.');
+            showToast(res.error || 'Upload error', 'error');
+          }
+        } catch (e) {
+          setUploadError('Failed to parse server upload response.');
+        }
+      } else {
+        let err = 'Upload server error';
+        try { err = JSON.parse(xhr.responseText).error || err; } catch(e){}
+        setUploadError(err);
+        showToast(err, 'error');
+      }
+    };
+
+    xhr.onerror = () => {
+      setIsUploadingVideo(false);
+      setUploadError('Could not reach backend server. Video is loaded locally in memory.');
+    };
+
+    xhr.send(formData);
+  };
+
+  const handleAddHeroSlide = () => {
+    const base = (localHeroSlides && localHeroSlides.length > 0) ? [...localHeroSlides] : [...defaultHeroSlidesData];
+    const newSlide = {
+      id: `slide-${Date.now()}`,
+      video: '/videos/ocean_freight.mp4',
+      poster: '/images/ocean_freight.png',
+      image: '/images/home_hero_ship.png',
+      iconName: 'Ship',
+      modeTag: `0${base.length + 1} LOGISTICS`,
+      tabTitle: 'New Cargo Service',
+      tabSubtitle: 'Fast & Secure Delivery',
+      pill: 'SPECIALIZED LOGISTICS • GLOBAL',
+      headlinePrefix: 'Global Cargo Logistics',
+      headlineGradient: 'Across International Routes',
+      desc: 'Scheduled air, sea, and overland cargo solutions tailored to your enterprise supply chain with 24/7 customs monitoring.',
+      highlight: 'Express Dispatch • 100% Tracking Visibility',
+      linkText: 'Request Freight Quote',
+      link: '/contact'
+    };
+    const updated = [...base, newSlide];
+    setLocalHeroSlides(updated);
+    setSelectedHeroIndex(updated.length - 1);
+    showToast(`Added slide #${updated.length}. Upload a video from local PC or select a preset.`);
+  };
+
+  const handleDeleteHeroSlide = (idxToDelete) => {
+    const base = (localHeroSlides && localHeroSlides.length > 0) ? [...localHeroSlides] : [...defaultHeroSlidesData];
+    if (base.length <= 1) {
+      showToast('You must keep at least 1 hero carousel slide.', 'error');
+      return;
+    }
+    const updated = base.filter((_, idx) => idx !== idxToDelete);
+    setLocalHeroSlides(updated);
+    setSelectedHeroIndex(Math.max(0, idxToDelete - 1));
+    showToast('Slide removed from Hero Carousel.');
+  };
+
+  const handleResetHeroSlides = () => {
+    if (window.confirm('Reset all Hero Carousel slides back to the 4 default multimodal video slides?')) {
+      setLocalHeroSlides([...defaultHeroSlidesData]);
+      setSelectedHeroIndex(0);
+      showToast('Hero Carousel reset to default multimodal slides.');
+    }
+  };
+
   // SAVE HANDLERS
   const handleSaveHero = async () => {
     setSavingCategory('hero');
-    const ok = await saveData('heroSlidesData', localHeroSlides);
+    const dataToSave = (localHeroSlides && localHeroSlides.length > 0) ? localHeroSlides : defaultHeroSlidesData;
+    const ok = await saveData('heroSlidesData', dataToSave);
     setSavingCategory(null);
-    if (ok) showToast('Homepage Hero text & vessel image updated live!');
+    if (ok) showToast('Homepage Hero Video Carousel saved & published live!');
     else showToast('Failed to save Hero section.', 'error');
   };
 
@@ -1148,18 +1343,35 @@ export default function Admin() {
           )}
 
           {/* ================================================================
-              TAB: HOMEPAGE HERO SECTION
+              TAB: HOMEPAGE HERO SECTION & VIDEO CAROUSEL STUDIO
               ================================================================ */}
           {activeTab === 'hero' && (
             <div>
               <div className="admin-module-header">
                 <div className="admin-module-title-wrap">
-                  <h1>Homepage Hero Section</h1>
+                  <h1>Homepage Hero Video Carousel ({heroSlidesSafe.length} Slides)</h1>
                   <p>
-                    Update the main vessel image, headline typography, badge tag, and value proposition displayed at the top of your public landing page.
+                    Upload cinematic background videos directly from your local PC, manage multimodal tabs (Ocean, Air, Road, Port), customize headline typography, and preview public presentation in real-time.
                   </p>
                 </div>
                 <div className="admin-module-actions">
+                  <button
+                    type="button"
+                    onClick={handleResetHeroSlides}
+                    className="admin-btn-action outline"
+                    title="Reset to 4 default multimodal video slides"
+                  >
+                    <RotateCcw size={15} />
+                    <span>Reset Defaults</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddHeroSlide}
+                    className="admin-btn-action outline"
+                  >
+                    <Plus size={16} />
+                    <span>Add Slide</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleSaveHero}
@@ -1172,126 +1384,555 @@ export default function Admin() {
                 </div>
               </div>
 
-              {localHeroSlides && localHeroSlides.length > 0 && (
-                <div>
-                  {/* Real-Time Live Preview Card */}
-                  <div className="admin-hero-live-preview">
-                    <img
-                      src={localHeroSlides[0]?.image || '/images/home_hero_ship.png'}
-                      alt="Hero Vessel"
-                      className="admin-hero-preview-bg"
-                      onError={(e) => { e.currentTarget.src = '/images/home_hero_ship.png'; }}
-                    />
-                    <div className="admin-hero-preview-overlay"></div>
-                    <div className="admin-hero-preview-content">
-                      <div className="admin-hero-preview-tag">
-                        <Sparkles size={12} />
-                        <span>{localHeroSlides[0]?.tabLabel || 'Licensed Freight Forwarder'}</span>
+              {/* 1. Carousel Slide Selector Tabs Bar */}
+              <div className="admin-hero-tabs-selector">
+                <div className="admin-hero-tabs-list">
+                  {heroSlidesSafe.map((slide, idx) => {
+                    const isSelected = idx === selectedHeroIndexSafe;
+                    return (
+                      <div
+                        key={slide.id || idx}
+                        onClick={() => setSelectedHeroIndex(idx)}
+                        className={`admin-hero-tab-pill ${isSelected ? 'active' : ''}`}
+                      >
+                        <div className="admin-hero-tab-pill-content">
+                          <span className="admin-hero-tab-tag">{slide.modeTag || `SLIDE ${idx + 1}`}</span>
+                          <strong className="admin-hero-tab-title">{slide.tabTitle || `Slide #${idx + 1}`}</strong>
+                          <span className="admin-hero-tab-video-indicator">
+                            <Film size={11} /> {slide.video ? 'Video Active' : 'Image Only'}
+                          </span>
+                        </div>
+                        {heroSlidesSafe.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteHeroSlide(idx);
+                            }}
+                            className="admin-hero-tab-del-btn"
+                            title="Delete this slide"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
-                      <h2 className="admin-hero-preview-title">
-                        {localHeroSlides[0]?.title || 'Reliable Global Cargo & Transport Solutions'}
-                      </h2>
-                      <p className="admin-hero-preview-sub">
-                        {localHeroSlides[0]?.subtitle || 'Air Freight, Ocean Shipping, Customs Clearance, and Supply Chain management.'}
-                      </p>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={handleAddHeroSlide}
+                    className="admin-hero-tab-add-btn"
+                    title="Add new carousel slide"
+                  >
+                    <Plus size={16} />
+                    <span>New Slide</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Real-Time Cinematic Video Player Live Preview */}
+              <div className="admin-hero-live-preview">
+                {activeHeroSlide.video ? (
+                  <video
+                    ref={liveVideoPreviewRef}
+                    key={activeHeroSlide.video}
+                    src={activeHeroSlide.video}
+                    poster={activeHeroSlide.poster || activeHeroSlide.image}
+                    autoPlay
+                    muted={previewMuted}
+                    loop
+                    playsInline
+                    className="admin-hero-preview-bg"
+                  />
+                ) : (
+                  <img
+                    src={activeHeroSlide.image || activeHeroSlide.poster || '/images/home_hero_ship.png'}
+                    alt="Hero Vessel"
+                    className="admin-hero-preview-bg"
+                    onError={(e) => { e.currentTarget.src = '/images/home_hero_ship.png'; }}
+                  />
+                )}
+                <div className="admin-hero-preview-overlay"></div>
+
+                {/* Floating Preview Controls Bar */}
+                <div className="admin-hero-preview-controls-bar">
+                  <span className="admin-hero-preview-badge">
+                    <span className="admin-pulse-dot" />
+                    LIVE PREVIEW — Slide {selectedHeroIndexSafe + 1} of {heroSlidesSafe.length}
+                  </span>
+                  <div className="admin-hero-preview-btn-group">
+                    {activeHeroSlide.video && (
+                      <>
+                        <button
+                          type="button"
+                          className="admin-preview-ctrl-btn"
+                          onClick={() => {
+                            if (liveVideoPreviewRef.current) {
+                              if (previewPlaying) {
+                                liveVideoPreviewRef.current.pause();
+                                setPreviewPlaying(false);
+                              } else {
+                                liveVideoPreviewRef.current.play();
+                                setPreviewPlaying(true);
+                              }
+                            }
+                          }}
+                          title={previewPlaying ? 'Pause video' : 'Play video'}
+                        >
+                          {previewPlaying ? <Pause size={13} /> : <Play size={13} />}
+                          <span>{previewPlaying ? 'Pause' : 'Play'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-preview-ctrl-btn"
+                          onClick={() => {
+                            if (liveVideoPreviewRef.current) {
+                              liveVideoPreviewRef.current.muted = !previewMuted;
+                              setPreviewMuted(!previewMuted);
+                            }
+                          }}
+                          title={previewMuted ? 'Unmute video audio' : 'Mute video audio'}
+                        >
+                          {previewMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                          <span>{previewMuted ? 'Muted' : 'Audio On'}</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Overlaid Headline & Typography Preview */}
+                <div className="admin-hero-preview-content">
+                  <div className="admin-hero-preview-tag">
+                    <Sparkles size={12} />
+                    <span>{activeHeroSlide.pill || activeHeroSlide.tabLabel || 'GLOBAL LOGISTICS'}</span>
+                  </div>
+                  <h2 className="admin-hero-preview-title">
+                    {activeHeroSlide.headlinePrefix || activeHeroSlide.title || 'Reliable Cargo Solutions'}{' '}
+                    <span className="admin-preview-gradient">{activeHeroSlide.headlineGradient || ''}</span>
+                  </h2>
+                  <p className="admin-hero-preview-sub">
+                    {activeHeroSlide.desc || activeHeroSlide.subtitle || 'Customs Clearance, Ocean Shipping, Air Charters, and Inland Freight across Bangladesh.'}
+                  </p>
+                  <div className="admin-hero-preview-mock-cta">
+                    <span className="admin-mock-btn primary">Request Freight Quote</span>
+                    <span className="admin-mock-btn secondary">Track Shipment</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. HERO VIDEO MANAGER & LOCAL PC UPLOADER CARD */}
+              <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="admin-card-header">
+                  <div className="admin-card-header-left">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div className="admin-icon-avatar" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+                        <Film size={18} />
+                      </div>
+                      <div>
+                        <h3>Slide #{selectedHeroIndexSafe + 1} Video Manager (Local PC Upload)</h3>
+                        <p>Upload a custom video file from your computer or choose from high-definition logistics presets.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="admin-status-badge active" style={{ fontSize: '0.72rem' }}>
+                    Editing: {activeHeroSlide.tabTitle || `Slide ${selectedHeroIndexSafe + 1}`}
+                  </span>
+                </div>
+
+                <div className="admin-card-body">
+                  {/* Upload Notification Alerts */}
+                  {uploadError && (
+                    <div className="admin-alert-banner error" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <AlertTriangle size={18} />
+                      <div style={{ flex: 1 }}>{uploadError}</div>
+                      <button type="button" onClick={() => setUploadError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <X size={15} />
+                      </button>
+                    </div>
+                  )}
+
+                  {uploadSuccess && (
+                    <div className="admin-alert-banner success" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <CheckCircle2 size={18} />
+                      <div style={{ flex: 1 }}>{uploadSuccess}</div>
+                      <button type="button" onClick={() => setUploadSuccess(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <X size={15} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Drag & Drop Local PC File Upload Zone */}
+                  <div
+                    className={`admin-video-dropzone ${isDragOverVideo ? 'dragover' : ''} ${isUploadingVideo ? 'uploading' : ''}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragOverVideo(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      setIsDragOverVideo(false);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragOverVideo(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleVideoFileSelected(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    onClick={() => {
+                      if (!isUploadingVideo && videoFileInputRef.current) {
+                        videoFileInputRef.current.click();
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      ref={videoFileInputRef}
+                      accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v,video/x-matroska"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleVideoFileSelected(e.target.files[0]);
+                        }
+                      }}
+                    />
+
+                    {isUploadingVideo ? (
+                      <div className="admin-dropzone-uploading">
+                        <div className="admin-spinner-large" />
+                        <h4>Uploading Video from Local PC... {uploadProgress}%</h4>
+                        <p>Processing and storing in public/uploads/videos/</p>
+                        <div className="admin-progress-bar-wrap">
+                          <div
+                            className="admin-progress-bar-fill"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="admin-dropzone-idle">
+                        <div className="admin-dropzone-icon-wrap">
+                          <UploadCloud size={38} />
+                        </div>
+                        <h4>Click or Drag &amp; Drop Video Here to Upload from Local PC</h4>
+                        <p>Supported Formats: MP4, WebM, MOV, OGG, MKV • Maximum File Size: 200 MB</p>
+                        <div className="admin-dropzone-btn-wrap">
+                          <button
+                            type="button"
+                            className="admin-btn-action primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              videoFileInputRef.current?.click();
+                            }}
+                          >
+                            <Upload size={15} />
+                            <span>Select Video from Computer</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Active Video Status Chip & Info */}
+                  <div className="admin-video-active-card">
+                    <div className="admin-video-active-left">
+                      <div className="admin-video-chip-icon">
+                        <FileVideo size={20} />
+                      </div>
+                      <div className="admin-video-chip-details">
+                        <strong>Current Video Source for Slide #{selectedHeroIndexSafe + 1}:</strong>
+                        <span className="admin-video-chip-path">{activeHeroSlide.video || 'No video assigned (using static image)'}</span>
+                        {activeHeroSlide.videoFileSize && (
+                          <span className="admin-video-chip-size">Size: {activeHeroSlide.videoFileSize}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="admin-video-active-actions">
+                      <button
+                        type="button"
+                        onClick={() => videoFileInputRef.current?.click()}
+                        className="admin-btn-action outline small"
+                      >
+                        <Upload size={13} />
+                        <span>Upload Different Video</span>
+                      </button>
                     </div>
                   </div>
 
-                  <div className="admin-card">
-                    <div className="admin-card-header">
-                      <div className="admin-card-header-left">
-                        <h3>Hero Image &amp; Headline Editor</h3>
-                        <p>Customize the headline copy and select from high-resolution presets or supply a custom CDN image URL.</p>
-                      </div>
+                  {/* Quick Video Presets Grid */}
+                  <div className="admin-field-group" style={{ marginTop: '1.25rem' }}>
+                    <label className="admin-field-label">
+                      Or Choose from Built-In Logistics Video Clips:
+                    </label>
+                    <div className="admin-video-preset-grid">
+                      {defaultVideoPresets.map((preset) => {
+                        const isSelected = activeHeroSlide.video === preset.path;
+                        return (
+                          <div
+                            key={preset.path}
+                            onClick={() => {
+                              updateActiveHeroSlide({
+                                video: preset.path,
+                                poster: preset.poster || activeHeroSlide.poster,
+                                videoFileName: preset.label
+                              });
+                              showToast(`Applied preset: ${preset.label}`);
+                            }}
+                            className={`admin-video-preset-pill ${isSelected ? 'active' : ''}`}
+                          >
+                            <Film size={15} />
+                            <div className="admin-video-preset-info">
+                              <span className="preset-name">{preset.label}</span>
+                              <span className="preset-path">{preset.path}</span>
+                            </div>
+                            {isSelected && <Check size={14} className="preset-check" />}
+                          </div>
+                        );
+                      })}
                     </div>
+                  </div>
 
-                    <div className="admin-card-body">
-                      {/* Preset Image Picker */}
-                      <div className="admin-field-group">
-                        <label className="admin-field-label">Quick Image Presets (Click to apply)</label>
-                        <div className="admin-image-picker-grid">
-                          {imagePresets.map((preset) => {
-                            const isSelected = localHeroSlides[0]?.image === preset.path;
+                  {/* Uploaded Videos Library (if any) */}
+                  {availableVideos && availableVideos.filter(v => v.category === 'uploaded').length > 0 && (
+                    <div className="admin-field-group" style={{ marginTop: '1rem' }}>
+                      <label className="admin-field-label">Previously Uploaded Local PC Videos:</label>
+                      <div className="admin-video-preset-grid">
+                        {availableVideos
+                          .filter(v => v.category === 'uploaded')
+                          .map((vid) => {
+                            const isSelected = activeHeroSlide.video === vid.path;
                             return (
                               <div
-                                key={preset.path}
+                                key={vid.path}
                                 onClick={() => {
-                                  const copy = [...localHeroSlides];
-                                  copy[0] = { ...copy[0], image: preset.path };
-                                  setLocalHeroSlides(copy);
+                                  updateActiveHeroSlide({
+                                    video: vid.path,
+                                    videoFileName: vid.name
+                                  });
+                                  showToast(`Applied uploaded video: ${vid.name}`);
                                 }}
-                                className={`admin-image-preset-card ${isSelected ? 'active' : ''}`}
-                                title={preset.label}
+                                className={`admin-video-preset-pill uploaded ${isSelected ? 'active' : ''}`}
                               >
-                                <img src={preset.path} alt={preset.label} />
+                                <FileVideo size={15} />
+                                <div className="admin-video-preset-info">
+                                  <span className="preset-name">{vid.name}</span>
+                                  <span className="preset-path">{vid.path}</span>
+                                </div>
+                                {isSelected && <Check size={14} className="preset-check" />}
                               </div>
                             );
                           })}
-                        </div>
                       </div>
+                    </div>
+                  )}
 
-                      <div className="admin-field-group">
-                        <label className="admin-field-label">Hero Image URL / Absolute Asset Path</label>
-                        <input
-                          type="text"
-                          className="admin-input"
-                          value={localHeroSlides[0]?.image || ''}
-                          onChange={(e) => {
-                            const copy = [...localHeroSlides];
-                            copy[0] = { ...copy[0], image: e.target.value };
-                            setLocalHeroSlides(copy);
-                          }}
-                          placeholder="/images/home_hero_ship.png"
-                        />
-                      </div>
+                  {/* Video Path & Poster Inputs */}
+                  <div className="admin-grid-2col" style={{ marginTop: '1.25rem' }}>
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Video Asset Path or CDN URL</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.video || ''}
+                        onChange={(e) => updateActiveHeroSlide({ video: e.target.value })}
+                        placeholder="/videos/ocean_freight.mp4 or /uploads/videos/hero_..."
+                      />
+                      <span className="admin-field-help">Direct path to MP4/WebM video asset.</span>
+                    </div>
 
-                      <div className="admin-grid-2col">
-                        <div className="admin-field-group">
-                          <label className="admin-field-label">Main Headline Title</label>
-                          <input
-                            type="text"
-                            className="admin-input"
-                            value={localHeroSlides[0]?.title || ''}
-                            onChange={(e) => {
-                              const copy = [...localHeroSlides];
-                              copy[0] = { ...copy[0], title: e.target.value };
-                              setLocalHeroSlides(copy);
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Poster Image (Thumbnail fallback)</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.poster || activeHeroSlide.image || ''}
+                        onChange={(e) => updateActiveHeroSlide({ poster: e.target.value, image: e.target.value })}
+                        placeholder="/images/ocean_freight.png"
+                      />
+                      <span className="admin-field-help">Displayed while video is loading or on low-bandwidth devices.</span>
+                    </div>
+                  </div>
+
+                  {/* Preset Poster Image Picker */}
+                  <div className="admin-field-group" style={{ marginTop: '0.75rem' }}>
+                    <label className="admin-field-label">Quick Poster Thumbnail Presets:</label>
+                    <div className="admin-image-picker-grid">
+                      {imagePresets.map((preset) => {
+                        const isSelected = (activeHeroSlide.poster === preset.path) || (activeHeroSlide.image === preset.path);
+                        return (
+                          <div
+                            key={preset.path}
+                            onClick={() => {
+                              updateActiveHeroSlide({
+                                poster: preset.path,
+                                image: preset.path
+                              });
                             }}
-                          />
-                        </div>
+                            className={`admin-image-preset-card ${isSelected ? 'active' : ''}`}
+                            title={preset.label}
+                          >
+                            <img src={preset.path} alt={preset.label} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                        <div className="admin-field-group">
-                          <label className="admin-field-label">Badge Tag (Statutory pill)</label>
-                          <input
-                            type="text"
-                            className="admin-input"
-                            value={localHeroSlides[0]?.tabLabel || ''}
-                            onChange={(e) => {
-                              const copy = [...localHeroSlides];
-                              copy[0] = { ...copy[0], tabLabel: e.target.value };
-                              setLocalHeroSlides(copy);
-                            }}
-                          />
-                        </div>
+              {/* 4. SLIDE HEADLINE, BADGE & NAVIGATION TEXT EDITOR */}
+              <div className="admin-card">
+                <div className="admin-card-header">
+                  <div className="admin-card-header-left">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div className="admin-icon-avatar" style={{ background: '#fef3c7', color: '#d97706' }}>
+                        <Sparkles size={18} />
                       </div>
-
-                      <div className="admin-field-group">
-                        <label className="admin-field-label">Subtitle Description (Paragraph)</label>
-                        <textarea
-                          rows={3}
-                          className="admin-textarea"
-                          value={localHeroSlides[0]?.subtitle || ''}
-                          onChange={(e) => {
-                            const copy = [...localHeroSlides];
-                            copy[0] = { ...copy[0], subtitle: e.target.value };
-                            setLocalHeroSlides(copy);
-                          }}
-                        />
+                      <div>
+                        <h3>Slide #{selectedHeroIndexSafe + 1} Headline Copy &amp; Carousel Tab Details</h3>
+                        <p>Customize the typography, multimodal navigation tab title, pill badge, and paragraph copy for this slide.</p>
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
+
+                <div className="admin-card-body">
+                  <div className="admin-grid-3col">
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Mode Tag (e.g. 01 OCEAN, 02 AIR)</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.modeTag || ''}
+                        onChange={(e) => updateActiveHeroSlide({ modeTag: e.target.value })}
+                        placeholder="01 OCEAN"
+                      />
+                    </div>
+
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Carousel Tab Title</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.tabTitle || ''}
+                        onChange={(e) => updateActiveHeroSlide({ tabTitle: e.target.value })}
+                        placeholder="Ocean Freight"
+                      />
+                    </div>
+
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Tab Subtitle</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.tabSubtitle || ''}
+                        onChange={(e) => updateActiveHeroSlide({ tabSubtitle: e.target.value })}
+                        placeholder="FCL & LCL Shipping"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-grid-2col" style={{ marginTop: '0.5rem' }}>
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Icon Identifier</label>
+                      <select
+                        className="admin-select"
+                        value={activeHeroSlide.iconName || 'Ship'}
+                        onChange={(e) => updateActiveHeroSlide({ iconName: e.target.value })}
+                      >
+                        <option value="Ship">Ship (Ocean Freight)</option>
+                        <option value="Plane">Plane (Air Freight)</option>
+                        <option value="Truck">Truck (Inland Transport)</option>
+                        <option value="Warehouse">Warehouse (CFS & Port)</option>
+                        <option value="ShieldCheck">ShieldCheck (Customs / Security)</option>
+                        <option value="Globe">Globe (Global Lines)</option>
+                        <option value="Building2">Building2 (Headquarters)</option>
+                      </select>
+                    </div>
+
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Glowing Pill Tag (Statutory Badge)</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.pill || activeHeroSlide.tabLabel || ''}
+                        onChange={(e) => updateActiveHeroSlide({ pill: e.target.value, tabLabel: e.target.value })}
+                        placeholder="GLOBAL OCEAN FREIGHT • FCL & LCL"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-grid-2col" style={{ marginTop: '0.5rem' }}>
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Main Headline Prefix (White text)</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.headlinePrefix || activeHeroSlide.title || ''}
+                        onChange={(e) => updateActiveHeroSlide({ headlinePrefix: e.target.value, title: e.target.value })}
+                        placeholder="Connecting Continents"
+                      />
+                    </div>
+
+                    <div className="admin-field-group">
+                      <label className="admin-field-label">Headline Gradient Accent (Cyan/Gold text)</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={activeHeroSlide.headlineGradient || ''}
+                        onChange={(e) => updateActiveHeroSlide({ headlineGradient: e.target.value })}
+                        placeholder="Across The Open Seas"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-field-group" style={{ marginTop: '0.5rem' }}>
+                    <label className="admin-field-label">Subtitle Description (Paragraph)</label>
+                    <textarea
+                      rows={3}
+                      className="admin-textarea"
+                      value={activeHeroSlide.desc || activeHeroSlide.subtitle || ''}
+                      onChange={(e) => updateActiveHeroSlide({ desc: e.target.value, subtitle: e.target.value })}
+                      placeholder="Detailed value proposition for this freight mode..."
+                    />
+                  </div>
+
+                  <div className="admin-field-group" style={{ marginTop: '0.5rem' }}>
+                    <label className="admin-field-label">Highlight / Corridor Tag</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={activeHeroSlide.highlight || ''}
+                      onChange={(e) => updateActiveHeroSlide({ highlight: e.target.value })}
+                      placeholder="Chittagong & Mongla Seaports • Global Vessel Contracts"
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {heroSlidesSafe.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteHeroSlide(selectedHeroIndexSafe)}
+                      className="admin-btn-action danger"
+                    >
+                      <Trash2 size={15} />
+                      <span>Delete This Slide</span>
+                    </button>
+                  ) : <div />}
+
+                  <button
+                    type="button"
+                    onClick={handleSaveHero}
+                    disabled={savingCategory === 'hero'}
+                    className="admin-btn-action primary"
+                  >
+                    <Save size={16} />
+                    <span>{savingCategory === 'hero' ? 'Saving Live...' : 'Save & Publish Hero Carousel'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
