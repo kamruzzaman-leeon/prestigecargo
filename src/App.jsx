@@ -8,7 +8,6 @@ import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Tracking from './pages/Tracking';
 import Admin from './pages/Admin';
-import LogisticsBackground from './components/LogisticsBackground';
 import { DataProvider } from './context/DataContext';
 import { X, Send } from 'lucide-react';
 import { EMAIL_CONFIG, sendEmailNotification } from './config/emailConfig';
@@ -136,7 +135,6 @@ function MainLayout() {
 
   return (
     <div className="app-wrapper">
-      {!isAdmin && <LogisticsBackground />}
       {!isAdmin && <Navbar onOpenQuote={() => handleOpenQuote()} />}
 
       <main>

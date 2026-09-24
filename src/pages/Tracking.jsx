@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useDataContext } from '../context/DataContext';
 import { Search, CheckCircle2, Clock, Box, Plane } from 'lucide-react';
-import FlyingPlane from '../components/FlyingPlane';
 
 export default function Tracking({ onOpenQuote }) {
   const { trackingData } = useDataContext();
@@ -43,7 +42,6 @@ export default function Tracking({ onOpenQuote }) {
   return (
     <div className="section-white">
       <section className="section section-offwhite page-header-banner" style={{ padding: '3.5rem 0' }}>
-        <FlyingPlane />
         <div className="container text-center">
           <span className="section-tag">Real-Time Visibility</span>
           <h1 className="section-title">Shipment Tracking</h1>

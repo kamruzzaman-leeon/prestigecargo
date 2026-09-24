@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useDataContext } from '../context/DataContext';
 import { Plane, Ship, ShieldCheck, Truck, Warehouse, CheckCircle2, ArrowRight, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import FlyingPlane from '../components/FlyingPlane';
 
 export default function Services({ onOpenQuote }) {
   const { servicesList } = useDataContext();
@@ -65,7 +64,6 @@ export default function Services({ onOpenQuote }) {
     <div className="section-white">
       {/* Services Header */}
       <section className="section section-offwhite page-header-banner" style={{ padding: '3.5rem 0' }}>
-        <FlyingPlane />
         <div className="container text-center">
           <span className="section-tag">Logistics Solutions</span>
           <h1 className="section-title">Our Freight &amp; Customs Services</h1>

@@ -46,6 +46,11 @@ export default function Navbar({ onOpenQuote }) {
                 </Link>
               </li>
               <li>
+                <Link to="/tracking" className={`nav-link ${isActive('/tracking') ? 'active' : ''}`} onClick={() => setMobileNavOpen(false)}>
+                  Tracking
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className={`nav-link ${isActive('/contact') ? 'active' : ''}`} onClick={() => setMobileNavOpen(false)}>
                   Contact Us
                 </Link>
@@ -54,7 +59,10 @@ export default function Navbar({ onOpenQuote }) {
           </nav>
 
           <div className="nav-actions">
-            <button className="btn btn-primary btn-sm" onClick={onOpenQuote}>
+            <Link to="/tracking" className="nav-btn-track">
+              Track Shipment
+            </Link>
+            <button className="nav-btn-quote" onClick={onOpenQuote}>
               Get a Quote
             </button>
             <button className="mobile-toggle" onClick={() => setMobileNavOpen(!mobileNavOpen)}>

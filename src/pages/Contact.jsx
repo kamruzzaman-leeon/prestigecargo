@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useDataContext } from '../context/DataContext';
 import { MapPin, Globe, Mail, Copy, Check, Send, CheckCircle2, Plane } from 'lucide-react';
-import FlyingPlane from '../components/FlyingPlane';
 import { EMAIL_CONFIG, sendEmailNotification } from '../config/emailConfig';
 
 export default function Contact() {
@@ -68,7 +67,6 @@ export default function Contact() {
   return (
     <div className="section-white">
       <section className="section section-offwhite page-header-banner" style={{ padding: '3.5rem 0' }}>
-        <FlyingPlane />
         <div className="container text-center">
           <span className="section-tag">Get In Touch</span>
           <h1 className="section-title">Contact Us</h1>

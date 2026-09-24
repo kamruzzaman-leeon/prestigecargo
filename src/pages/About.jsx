@@ -4,8 +4,6 @@ import {
   Award, ShieldCheck, Globe, CheckCircle2, ArrowRight,
   Plane, Truck, FileCheck, Anchor
 } from 'lucide-react';
-import FlyingPlane from '../components/FlyingPlane';
-
 export default function About({ onOpenQuote }) {
   const { companyInfo } = useDataContext();
 
@@ -23,7 +21,6 @@ export default function About({ onOpenQuote }) {
     <div className="section-white">
       {/* Header */}
       <section className="section section-offwhite page-header-banner" style={{ padding: '3.5rem 0' }}>
-        <FlyingPlane />
         <div className="container text-center">
           <span className="section-tag">About {companyName}</span>
           <h1 className="section-title">Who We Are &amp; Our Legacy</h1>
