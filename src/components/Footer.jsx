@@ -63,11 +63,13 @@ export default function Footer() {
 
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} {companyInfo?.name || 'Prestige Cargo'}. All Rights Reserved.</p>
-          <p>
-            <Link to="/admin" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.8 }}>
-              Designed for Prestige Cargo BD
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <span>Designed for Prestige Cargo BD</span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <Link to="/admin" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>
+              Admin Portal →
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </footer>
