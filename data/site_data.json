@@ -1,0 +1,270 @@
+{
+  "companyData": {
+    "name": "Prestige Cargo",
+    "legalName": "Prestige Cargo BD Limited",
+    "tagline": "Cargo & Transport Solutions",
+    "ainNumber": "AIN-30129841",
+    "yearsOfExperience": "10+",
+    "establishedYear": "2015",
+    "credentials": {
+      "ainNumber": "AIN-30129841",
+      "customsAgentLicenseNo": "CNF/DAC-0842/2016",
+      "baffaMembershipNo": "BAFFA/ORD/2018-912",
+      "binVatNo": "002847192-0102",
+      "tradeLicenseNo": "TRAD/DSCC/019284/2023",
+      "ircNo": "IRC-2983749",
+      "ercNo": "ERC-9823471"
+    },
+    "contacts": {
+      "primaryPhone": "+880 1700-000000",
+      "secondaryPhone": "+880 1800-000000",
+      "salesEmail": "info@prestigecargobd.com",
+      "supportEmail": "operations@prestigecargobd.com",
+      "whatsapp": "+8801700000000",
+      "website": "www.prestigecargobd.com"
+    },
+    "headOffice": {
+      "title": "Corporate Head Office",
+      "address": "75, Sarker R.E.F Tower-1st floor, Gawair (Kazi Bari), Dakshinkhan, Dhaka-1230, Bangladesh.",
+      "hours": "Sat - Thu: 09:00 AM - 07:00 PM"
+    },
+    "offices": [
+      {
+        "id": "office-dhaka-hq",
+        "name": "Corporate Head Office (Dakshinkhan)",
+        "badge": "Headquarters",
+        "address": "75, Sarker R.E.F Tower-1st floor, Gawair (Kazi Bari), Dakshinkhan, Dhaka-1230, Bangladesh.",
+        "phoneDisplay": "+880 1700-000000",
+        "phone": "+8801700000000",
+        "email": "info@prestigecargobd.com",
+        "hours": "Sat - Thu: 9:00 AM - 7:00 PM"
+      },
+      {
+        "id": "office-airport-cargo",
+        "name": "Dhaka Airport Air Cargo Desk",
+        "badge": "Air Cargo Terminal",
+        "address": "Air Freight Village, Hazrat Shahjalal International Airport (DAC), Kurmitola, Dhaka-1229.",
+        "phoneDisplay": "+880 1711-223344",
+        "phone": "+8801711223344",
+        "email": "aircargo@prestigecargobd.com",
+        "hours": "24/7 Air Customs Clearance Operations"
+      },
+      {
+        "id": "office-chittagong-port",
+        "name": "Chittagong Seaport Branch",
+        "badge": "Sea Port Operations",
+        "address": "Agrabad Commercial Area, Near Chittagong Port Authority (CGP), Chattogram-4100.",
+        "phoneDisplay": "+880 1819-334455",
+        "phone": "+8801819334455",
+        "email": "chattogram@prestigecargobd.com",
+        "hours": "Sat - Thu: 8:30 AM - 6:30 PM (Vessel Schedule 24/7)"
+      },
+      {
+        "id": "office-benapole-border",
+        "name": "Benapole Land Port Desk",
+        "badge": "Border Customs",
+        "address": "Land Port Customs Terminal Area, Benapole, Jashore.",
+        "phoneDisplay": "+880 1912-778899",
+        "phone": "+8801912778899",
+        "email": "benapole@prestigecargobd.com",
+        "hours": "Mon - Sat: 8:00 AM - 8:00 PM"
+      }
+    ]
+  },
+  "heroSlidesData": [
+    {
+      "id": "slide-1",
+      "tabLabel": "Licensed Freight Forwarder & Customs C&F Specialist",
+      "title": "Reliable Global Cargo & Transport Solutions",
+      "subtitle": "Prestige Cargo delivers fast, secure, and cost-effective Air Freight, Ocean Shipping, Customs Clearance, and Supply Chain management across Bangladesh and international trade lanes.",
+      "type": "Ocean & Air Cargo Lines",
+      "image": "/images/home_hero_ship.png",
+      "linkText": "Get Instant Freight Quote",
+      "link": "/contact"
+    }
+  ],
+  "industriesData": [
+    {
+      "id": "ind-rmg",
+      "badge": "Export Pillar",
+      "title": "Ready-Made Garments (RMG) & Textiles",
+      "image": "/images/truck_transport.png",
+      "overview": "Dedicated GOH (Garment on Hanger) containers, buyer consolidation, and urgent air charters to meet buyer season deadlines."
+    },
+    {
+      "id": "ind-pharma",
+      "badge": "Cold Chain",
+      "title": "Pharmaceuticals & Healthcare",
+      "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80",
+      "overview": "Cold-chain temperature-controlled air freight and reefer containers for medicine, active ingredients, and vaccines."
+    },
+    {
+      "id": "ind-machinery",
+      "badge": "Industrial Import",
+      "title": "Industrial Capital Machinery & Project Goods",
+      "image": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+      "overview": "Flat-rack, open-top, and heavy lift transport for factory setup equipment and infrastructure projects."
+    }
+  ],
+  "servicesData": [
+    {
+      "id": "svc-air",
+      "title": "Air Freight Forwarding",
+      "category": "Air Operations",
+      "tagline": "Priority air cargo connecting Dhaka with major worldwide hubs",
+      "description": "Prestige Cargo offers swift and reliable air freight forwarding from Hazrat Shahjalal International Airport (DAC). We manage priority shipments, express consolidations, and direct air cargo charter services to major global hubs.",
+      "image": "/images/air_freight.png",
+      "features": [
+        "Airport-to-Airport & Door-to-Door Delivery",
+        "Perishable & Temperature Sensitive Cargo Handling",
+        "Garment-on-Hanger (GOH) Unit Load Devices",
+        "Complete Airway Bill (HAWB / MAWB) Issuance"
+      ]
+    },
+    {
+      "id": "svc-ocean",
+      "title": "Ocean Freight (FCL / LCL)",
+      "category": "Ocean Operations",
+      "tagline": "Full container load and groupage shipping via Chittagong & Mongla",
+      "description": "We partner with premier global shipping lines to offer full container loads (FCL) and less than container loads (LCL) out of Chittagong Port (CGP) and Mongla Port with scheduled weekly sailings.",
+      "image": "/images/ocean_freight.png",
+      "features": [
+        "Standard Dry & High Cube Containers (20ft / 40ft / 45ft)",
+        "LCL Groupage & Freight De-consolidation",
+        "Temperature-Controlled Reefer Containers",
+        "Port-to-Port & Door Container Movement"
+      ]
+    },
+    {
+      "id": "svc-customs",
+      "title": "Customs Clearance & C&F Agent",
+      "category": "Statutory Compliance",
+      "tagline": "Licensed customs documentation and clearance at all Bangladesh ports",
+      "description": "Navigating customs regulations smoothly. Our C&F experts manage import/export duty assessment, HS Code classification, and physical customs inspection at Dhaka Airport & Chittagong Port.",
+      "image": "/images/customs_clearance.png",
+      "features": [
+        "Dhaka Air Cargo & Chittagong Port Customs Clearance",
+        "EPZ & Bonded Facility Documentation",
+        "NBR Compliance & Duty Refund Advisory",
+        "Speedy Customs Release & Physical Inspection Support"
+      ]
+    },
+    {
+      "id": "svc-trucking",
+      "title": "Inland Road Transport & Trucking",
+      "category": "Domestic Transit",
+      "tagline": "Covered van and prime mover fleet for factory-to-port delivery",
+      "description": "Fleet of covered vans, container prime movers, and trailers ensuring safe road transport from factories and EPZ zones directly to ports and warehouses across Bangladesh.",
+      "image": "/images/truck_transport.png",
+      "features": [
+        "Nationwide Factory & Warehouse Pickup",
+        "Real-time GPS Fleet Monitoring",
+        "Benapole Land Border Customs Transit"
+      ]
+    },
+    {
+      "id": "svc-warehouse",
+      "title": "Warehousing & CFS Storage",
+      "category": "Storage & Handling",
+      "tagline": "Secure Container Freight Station and inventory distribution",
+      "description": "Secure Container Freight Station (CFS) storage, cargo sorting, palletization, and distribution support with 24/7 security and inventory reporting.",
+      "image": "/images/warehouse_cfs.png",
+      "features": [
+        "24/7 Monitored Secure Warehousing",
+        "Cargo Packing, Labeling, & Consolidation",
+        "Inventory Tracking & Cross-docking"
+      ]
+    }
+  ],
+  "tradeLanesData": [
+    {
+      "id": "lane-eu-uk",
+      "origin": "Dhaka/Chittagong",
+      "flag": "🇧🇩",
+      "destination": "EU & UK",
+      "destFlag": "🇬🇧",
+      "active": true,
+      "direction": "Europe & UK Corridor",
+      "seaTransit": "22 - 28 Days",
+      "airTransit": "2 - 4 Days",
+      "frequency": "Daily Air / Weekly Sailings",
+      "description": "Serving London (LHR), Frankfurt (FRA), Rotterdam, & Hamburg for RMG exports and consumer goods."
+    },
+    {
+      "id": "lane-north-america",
+      "origin": "Dhaka/Chittagong",
+      "flag": "🇧🇩",
+      "destination": "USA & Canada",
+      "destFlag": "🇺🇸",
+      "active": true,
+      "direction": "North America Corridor",
+      "seaTransit": "28 - 35 Days",
+      "airTransit": "3 - 5 Days",
+      "frequency": "Direct Connections",
+      "description": "Direct connections to JFK, ORD, LAX air ports and US East & West Coast seaports (New York, Savannah, LA)."
+    },
+    {
+      "id": "lane-gcc",
+      "origin": "Dhaka",
+      "flag": "🇧🇩",
+      "destination": "Dubai / Jebel Ali / KSA",
+      "destFlag": "🇦🇪",
+      "active": true,
+      "direction": "Middle East (GCC)",
+      "seaTransit": "10 - 14 Days",
+      "airTransit": "1 - 2 Days",
+      "frequency": "Daily Departures",
+      "description": "Daily air freight and ocean container feeder services to Dubai (DXB/Jebel Ali), Riyadh, and Jeddah."
+    },
+    {
+      "id": "lane-intra-asia",
+      "origin": "China / Singapore",
+      "flag": "🇨🇳",
+      "destination": "Bangladesh",
+      "destFlag": "🇧🇩",
+      "active": true,
+      "direction": "Intra-Asia Route",
+      "seaTransit": "7 - 12 Days",
+      "airTransit": "1 - 3 Days",
+      "frequency": "Continuous Logistics",
+      "description": "Fast import logistics for raw fabrics, yarn, machinery, and electronic components entering Chittagong & Dhaka."
+    }
+  ],
+  "trackingData": {
+    "PC-98421": {
+      "number": "PC-98421",
+      "status": "In Transit",
+      "origin": "Dhaka Airport Terminal (DAC)",
+      "destination": "Hamburg Port Terminal (HAM)",
+      "estimatedDelivery": "August 28, 2026",
+      "currentLocation": "Dubai Air Cargo Hub",
+      "steps": [
+        {
+          "title": "Cargo Received & Inspected",
+          "date": "Aug 22, 10:30 AM",
+          "completed": true
+        },
+        {
+          "title": "Customs Cleared at Dhaka (DAC)",
+          "date": "Aug 23, 02:15 PM",
+          "completed": true
+        },
+        {
+          "title": "Departed Hub Air Transport",
+          "date": "Aug 24, 08:00 AM",
+          "completed": true
+        },
+        {
+          "title": "In Transit - Connecting Hub",
+          "date": "Aug 24, 02:45 PM",
+          "current": true
+        },
+        {
+          "title": "Arrival at Destination Port",
+          "date": "Est. Aug 28",
+          "completed": false
+        }
+      ]
+    }
+  }
+}

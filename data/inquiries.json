@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Test Shipper",
+    "email": "shipper@example.com",
+    "serviceType": "Air Freight",
+    "message": "Hello from MongoDB test",
+    "status": "new",
+    "_id": "6ab370d2327beb49e5127466",
+    "createdAt": "2026-09-23T06:25:22.918Z",
+    "updatedAt": "2026-09-23T06:25:22.918Z",
+    "__v": 0
+  }
+]
