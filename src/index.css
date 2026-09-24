@@ -371,36 +371,75 @@ main,
   }
 }
 
-/* Animated Flying Airplane in Hero & Page Banners */
+/* Animated Flying Airplane in Hero & Page Banners (Diagonal from lowest left to right high) */
 .hero-plane-flight {
   position: absolute;
-  top: 50px;
-  left: 0;
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 8px;
   color: #0284c7;
-  pointer-events: none;
-  animation: heroPlaneTravel 22s linear infinite;
+  animation: heroDiagonalFlight 18s linear infinite;
   z-index: 5;
+  will-change: left, bottom, transform;
 }
 
-@keyframes heroPlaneTravel {
+@keyframes heroDiagonalFlight {
   0% {
-    transform: translate(-100px, 35px) rotate(-3deg);
+    left: -120px;
+    bottom: 35px;
+    transform: rotate(-18deg);
     opacity: 0;
   }
 
-  6% {
+  5% {
     opacity: 0.95;
   }
 
-  94% {
+  95% {
     opacity: 0.95;
   }
 
   100% {
-    transform: translate(calc(100vw + 100px), -25px) rotate(-6deg);
+    left: calc(100% + 120px);
+    bottom: calc(100% - 65px);
+    transform: rotate(-22deg);
+    opacity: 0;
+  }
+}
+
+.banner-plane-flight {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0284c7;
+  animation: bannerDiagonalFlight 22s linear infinite;
+  z-index: 3;
+  will-change: left, bottom, transform;
+}
+
+@keyframes bannerDiagonalFlight {
+  0% {
+    left: -100px;
+    bottom: 12px;
+    transform: rotate(-14deg);
+    opacity: 0;
+  }
+
+  5% {
+    opacity: 0.95;
+  }
+
+  95% {
+    opacity: 0.95;
+  }
+
+  100% {
+    left: calc(100% + 100px);
+    bottom: calc(100% - 35px);
+    transform: rotate(-16deg);
     opacity: 0;
   }
 }
@@ -408,11 +447,11 @@ main,
 .flight-contrail,
 .banner-contrail,
 .sky-contrail {
-  width: 90px;
-  height: 2px;
-  background: linear-gradient(to right, transparent, rgba(56, 189, 248, 0.4), rgba(2, 132, 199, 0.85));
+  width: 95px;
+  height: 2.5px;
+  background: linear-gradient(to right, transparent, rgba(56, 189, 248, 0.45), rgba(2, 132, 199, 0.9));
   border-radius: 99px;
-  filter: blur(0.5px);
+  filter: blur(0.4px);
 }
 
 .flight-plane-icon-box,
@@ -432,7 +471,7 @@ main,
 .banner-plane-icon {
   position: relative;
   z-index: 2;
-  transform: rotate(45deg);
+  transform: rotate(20deg);
   transition: transform 0.2s ease;
 }
 
@@ -464,6 +503,7 @@ main,
     box-shadow: 0 0 0 8px rgba(56, 189, 248, 0);
   }
 }
+
 
 
 /* Floating Card Ship Wake Animation */
@@ -502,51 +542,7 @@ main,
   }
 }
 
-/* Animated Flying Plane across Page Header Banners */
-.banner-plane-flight {
-  position: absolute;
-  top: 28%;
-  left: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #0284c7;
-  pointer-events: none;
-  animation: bannerPlaneTravel 24s linear infinite;
-  z-index: 2;
-}
 
-.banner-contrail {
-  width: 80px;
-  height: 1.5px;
-  background: linear-gradient(to right, transparent, rgba(56, 189, 248, 0.35), rgba(2, 132, 199, 0.7));
-  border-radius: 99px;
-}
-
-.banner-plane-icon {
-  transform: rotate(45deg);
-  filter: drop-shadow(0 2px 6px rgba(2, 132, 199, 0.35));
-}
-
-@keyframes bannerPlaneTravel {
-  0% {
-    transform: translate(-80px, 25px) rotate(-3deg);
-    opacity: 0;
-  }
-
-  10% {
-    opacity: 0.85;
-  }
-
-  90% {
-    opacity: 0.85;
-  }
-
-  100% {
-    transform: translate(calc(100vw + 80px), -25px) rotate(-6deg);
-    opacity: 0;
-  }
-}
 
 .text-center {
   text-align: center;
@@ -1490,6 +1486,55 @@ main,
     box-shadow: var(--shadow-lg);
     border-bottom: 1px solid var(--border-light);
   }
+
+  /* Responsive flight path for tablets */
+  @keyframes heroDiagonalFlight {
+    0% {
+      left: -100px;
+      bottom: 25px;
+      transform: rotate(-28deg);
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 0.95;
+    }
+
+    95% {
+      opacity: 0.95;
+    }
+
+    100% {
+      left: calc(100% + 100px);
+      bottom: calc(100% - 55px);
+      transform: rotate(-32deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes bannerDiagonalFlight {
+    0% {
+      left: -80px;
+      bottom: 10px;
+      transform: rotate(-18deg);
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 0.95;
+    }
+
+    95% {
+      opacity: 0.95;
+    }
+
+    100% {
+      left: calc(100% + 80px);
+      bottom: calc(100% - 25px);
+      transform: rotate(-20deg);
+      opacity: 0;
+    }
+  }
 }
 
 @media (max-width: 600px) {
@@ -1503,5 +1548,54 @@ main,
 
   .hero-stats {
     grid-template-columns: 1fr;
+  }
+
+  /* Responsive flight path for mobile screens */
+  @keyframes heroDiagonalFlight {
+    0% {
+      left: -80px;
+      bottom: 15px;
+      transform: rotate(-44deg);
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 0.95;
+    }
+
+    95% {
+      opacity: 0.95;
+    }
+
+    100% {
+      left: calc(100% + 80px);
+      bottom: calc(100% - 40px);
+      transform: rotate(-48deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes bannerDiagonalFlight {
+    0% {
+      left: -70px;
+      bottom: 8px;
+      transform: rotate(-24deg);
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 0.95;
+    }
+
+    95% {
+      opacity: 0.95;
+    }
+
+    100% {
+      left: calc(100% + 70px);
+      bottom: calc(100% - 20px);
+      transform: rotate(-26deg);
+      opacity: 0;
+    }
   }
 }
