@@ -144,7 +144,7 @@ function MainLayout() {
           <Route path="/services" element={<Services onOpenQuote={() => handleOpenQuote()} />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/tracking" element={<Tracking onOpenQuote={handleOpenQuote} />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
